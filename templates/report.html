@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Your Health Report (Download){% endblock %}
+
+{% block content %}
+  <div class="analytics-container" style="padding-top: 20px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;">
+      <h2 class="analytics-title" style="margin:0;">Your Personalized Health Report</h2>
+    </div>
+
+    <!-- 1. User Input Summary -->
+    <div class="visualization-section">
+      <h3 class="section-title">User Input Summary</h3>
+      <div class="table-container">
+        <table class="enhanced-table">
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>User Value</th>
+              <th>Healthy Range</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+              <tr>
+                <td>{{ row.metric }}</td>
+                <td>{{ row.value }}</td>
+                <td>{{ row.range }}</td>
+                <td>
+                  {% set e = row.status[0] %}
+                  {% set c = row.status[1] %}
+                  <span style="font-weight:700; color:{% if c=='green' %}#28a745{% elif c=='yellow' %}#f1c40f{% else %}#dc3545{% endif %};">{{ e }}</span>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 2. Prediction Result -->
+    <div class="visualization-section">
+      <h3 class="section-title">Prediction Result</h3>
+      <div class="insights-grid">
+        <div class="metric-card" style="background:linear-gradient(135deg,#6f42c1,#5B8FB9);">
+          <h4>Risk Level</h4>
+          <div class="metric-value">{{ 'High' if output.is_risk else 'Low/Moderate' }}</div>
+          <div class="metric-label">Based on model prediction</div>
+        </div>
+        <div class="metric-card" style="background:linear-gradient(135deg,#28a745,#5B8FB9);">
+          
+        </div>
+        <div class="insight-card" style="grid-column: span 2;">
+          <h4>Top Influencing Factors</h4>
+          <ul>
+            {% for f in top_factors %}
+              <li>{{ f }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Health Metric Comparison -->
+    <div class="visualization-section">
+      <h3 class="section-title">Health Metric Comparison</h3>
+      <p class="section-description">Your values vs. healthy averages (midpoint of ideal range).</p>
+      <div class="chart-container" style="height:380px;">
+        <canvas id="reportCompare"></canvas>
+      </div>
+    </div>
+
+    <!-- 4. Personalized Risk Factors & Suggestions -->
+    <div class="visualization-section">
+      <h3 class="section-title">Personalized Risk Factors & Suggestions</h3>
+      {% if user_risks and user_risks|length > 0 %}
+      <div class="risk-cards-container">
+        {% for risk in user_risks %}
+          <div class="risk-card" style="border-left:8px solid {% if risk.color == 'red' %}#dc3545{% elif risk.color == 'orange' %}#fd7e14{% else %}#ffc107{% endif %}; ">
+            <div class="risk-emoji">{{ risk.emoji }}</div>
+            <div class="risk-title" style="color:{% if risk.color == 'red' %}#dc3545{% elif risk.color == 'orange' %}#fd7e14{% else %}#ffc107{% endif %};">{{ risk.title }}</div>
+            <div class="risk-tip">{{ risk.tip }}</div>
+          </div>
+        {% endfor %}
+      </div>
+      {% else %}
+        <div style="padding:12px 0; color:#28a745;">No prominent risk factors detected. Great job!</div>
+      {% endif %}
+    </div>
+
+    <!-- 5. Basic Remedies Section -->
+    <div class="visualization-section">
+      <h3 class="section-title">Basic Remedies</h3>
+      <div class="remedies-strip">
+        <div class="remedy-tip-card"><span class="remedy-emoji">🥦</span><span class="remedy-text">Eat fruits, vegetables, whole grains</span></div>
+        <div class="remedy-tip-card"><span class="remedy-emoji">🧘</span><span class="remedy-text">30 mins daily walk or yoga</span></div>
+        <div class="remedy-tip-card"><span class="remedy-emoji">💧</span><span class="remedy-text">Drink 2–3 L/day</span></div>
+        <div class="remedy-tip-card"><span class="remedy-emoji">😴</span><span class="remedy-text">Sleep 7–8 hours nightly</span></div>
+        <div class="remedy-tip-card"><span class="remedy-emoji">☀️</span><span class="remedy-text">Manage stress with meditation or music</span></div>
+      </div>
+    </div>
+
+    <!-- 6. Doctor Recommendation & Next Steps -->
+    <div class="visualization-section">
+      <h3 class="section-title">Doctor Recommendation & Next Steps</h3>
+      <p>Your health results provide valuable insight into your heart condition and overall wellness. We encourage you to discuss these findings with your healthcare provider or a qualified cardiologist for a more personalized evaluation.</p>
+      <ul>
+        <li>Eat fresh, nutrient-rich foods and limit processed meals.</li>
+        <li>Stay physically active — even light daily exercise helps.</li>
+        <li>Avoid smoking and limit alcohol consumption.</li>
+        <li>Get adequate sleep and manage stress through relaxation or hobbies.</li>
+      </ul>
+      <p>❤️ Remember: prevention and early awareness are key to a healthy heart. Take small steps today for a stronger tomorrow.</p>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function(){
+      const ctx = document.getElementById('reportCompare').getContext('2d');
+      const metrics = ['Blood Pressure','Cholesterol Level','Sugar Consumption','Triglyceride Level','CRP Level','BMI'];
+      const user = {{ user_metrics|tojson|safe }} || {};
+      const healthy = {{ healthy_metrics|tojson|safe }} || {};
+      const userData = metrics.map(m => user[m] || 0);
+      const healthyData = metrics.map(m => healthy[m] || 0);
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: metrics,
+          datasets: [
+            {label: "User's Value", data: userData, backgroundColor: '#fd7e14'},
+            {label: 'Healthy Average', data: healthyData, backgroundColor: '#28a745'}
+          ]
+        },
+        options: {
+          plugins: { legend: {position:'top'} },
+          scales: { y: { beginAtZero:true, title:{display:true, text:'Value'} } }
+        }
+      });
+    });
+  </script>
+{% endblock %}
+
+
+

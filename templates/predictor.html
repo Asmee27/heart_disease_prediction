@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Predictor - Assess Your Risk{% endblock %}
+
+{% block content %}
+    <h1 style="color: var(--primary-color);">🩺 Assess Your Heart Health Risk</h1>
+    <p>Please enter your current health metrics below to receive a risk assessment.</p>
+
+    <form method="POST" class="predictor-form">
+        
+        {% for group_name, features in feature_groups.items() %}
+        <h2 style="font-size: 1.5em; margin-top: 40px;">{{ group_name }}</h2>
+        <div class="input-group">
+            {% for feature in features %}
+                <div class="input-field">
+                    <label for="{{ feature }}">{{ feature }}</label>
+                    {% if feature in mapping %}
+                        <select id="{{ feature }}" name="{{ feature }}" required>
+                            {% for label, value in mapping[feature].items() %}
+                                <option value="{{ label }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    {% else %}
+                        <input type="number" id="{{ feature }}" name="{{ feature }}" step="any" required placeholder="Enter value for {{ feature }}">
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+
+        <button type="submit" class="submit-btn">Predict Risk</button>
+    </form>
+
+    {% if output and output.prediction %}
+        <div class="result-box {% if output.is_risk %}result-risk{% else %}result-safe{% endif %}">
+            <h3>Prediction: {{ output.prediction | safe }}</h3>
+            <p style="font-size: 1.4em; font-weight: 600;">Risk Score: {{ output.probability }}</p>
+            <h4 style="color: #28a745; margin-top: 20px;">Analysis and Conclusion</h4>
+            <p><strong>Conclusion:</strong> {{ output.conclusion }}</p>
+        </div>
+
+        <!-- Modern Personalized Risk Cards Section -->
+        <div style="margin-top:44px;">
+          <h3 class="section-title">Personalized Risk Factors & Suggestions</h3>
+          {% if user_risks and user_risks|length > 0 %}
+            <div class="risk-cards-container">
+                {% for risk in user_risks %}
+                  <div class="risk-card" style="border-left:8px solid {% if risk.color == 'red' %}#dc3545{% elif risk.color == 'orange' %}#fd7e14{% else %}#ffc107{% endif %}; ">
+                    <div class="risk-emoji">{{ risk.emoji }}</div>
+                    <div class="risk-title" style="font-weight:700;font-size:1.1em;color:{% if risk.color == 'red' %}#dc3545{% elif risk.color == 'orange' %}#fd7e14{% else %}#ffc107{% endif %};">{{ risk.title }}</div>
+                    <div class="risk-tip">{{ risk.tip }}</div>
+                    <div class="risk-progress-bar" style="background:{% if risk.color == 'red' %}#fad4d2{% elif risk.color == 'orange' %}#ffe1c0{% else %}#fff4c2{% endif %}; margin-top:15px; height:9px; border-radius:5px;"></div>
+                  </div>
+                {% endfor %}
+            </div>
+          {% else %}
+            <div style="padding:35px; text-align:center; color:#28a745; font-size:1.2em; "><span style="font-size:1.8em;">✅</span> No prominent risk factors found. Keep up the healthy habits!</div>
+          {% endif %}
+        </div>
+
+        <!-- Remedies Section (cute tips row) -->
+        <div style="margin-top:46px;">
+          <h3 class="section-title">Remedies</h3>
+          <div class="remedies-strip">
+            <div class="remedy-tip-card"><span class="remedy-emoji">💧</span><span class="remedy-text">Stay hydrated (8+ glasses/day)</span></div>
+            <div class="remedy-tip-card"><span class="remedy-emoji">🏃‍♀️</span><span class="remedy-text">Walk 30 minutes daily</span></div>
+            <div class="remedy-tip-card"><span class="remedy-emoji">💤</span><span class="remedy-text">Get 7–8 hours of sleep</span></div>
+            <div class="remedy-tip-card"><span class="remedy-emoji">🥦</span><span class="remedy-text">Eat whole foods</span></div>
+            <div class="remedy-tip-card"><span class="remedy-emoji">😌</span><span class="remedy-text">Manage stress with meditation or music</span></div>
+          </div>
+        </div>
+
+        <!-- Risk Meter Section: Replace cluster visualization with gauge -->
+        <div class="visualization-section">
+          <h3 class="section-title">Your Risk Meter</h3>
+          <div class="meter-container" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <canvas id="riskMeter" width="360" height="180"></canvas>
+            <div id="risk-label" style="font-size:1.4em;font-weight:600;margin-top:20px"></div>
+          </div>
+        </div>
+        <script>
+        // Risk Meter Chart.js semi-gauge style
+        document.addEventListener('DOMContentLoaded', function(){
+            const ctxMeter = document.getElementById('riskMeter').getContext('2d');
+            const score = parseFloat("{{ output.probability|replace('%','')|default(0) }}") || 0;
+            // 0-100 range; green <35, yellow <65, orange <85, red >=85
+            var color;
+            if(score<35) color='#28a745'; else if(score<65) color='#ffc107'; 
+            else if(score<85) color='#fd7e14'; else color='#dc3545';
+            // Create a doughnut chart that looks like a semicircle
+            new Chart(ctxMeter, {
+              type: 'doughnut',
+              data: { datasets: [{
+                 data: [score, 100-score],
+                 backgroundColor: [color, '#e6e6e6'],
+                 borderWidth:0,
+               }] },
+              options: {
+                rotation: -Math.PI,
+                circumference: Math.PI,
+                cutout: '70%',
+                plugins: { legend: {display: false } },
+                tooltips: {enabled: false},
+              }
+            });
+            // Label
+            let riskTxt = 'Moderate';
+            if(score<35) riskTxt='Low'; else if(score<65) riskTxt='Moderate';
+            else if(score<85) riskTxt='High'; else riskTxt='Critical';
+            document.getElementById('risk-label').innerHTML = `<span style='color:${color}'>${riskTxt} Risk (${score.toFixed(1)}%)</span>`;
+        });
+        </script>
+
+        <!-- Health Parameter Comparison Graph -->
+        <div class="visualization-section">
+          <h3 class="section-title">How You Compare with a Healthy Profile</h3>
+          <p>Key health metrics: lower is usually better for risk parameters.</p>
+          <div class="chart-container" style="height: 340px;">
+            <canvas id="compareChart"></canvas>
+          </div>
+        </div>
+        <script>
+        // Bar or radar chart comparing user input vs healthy value
+        document.addEventListener('DOMContentLoaded', function(){
+          const ctxCompare = document.getElementById('compareChart').getContext('2d');
+          const user = {{ user_health_data|tojson|safe }};
+          const healthy = {{ healthy_ref_values|tojson|safe }};
+          const labels = Object.keys(user);
+          new Chart(ctxCompare, {
+            type: 'bar',
+            data: {
+              labels: labels,
+              datasets: [
+                {label: 'You', data: labels.map(k=>user[k]), backgroundColor: '#6f42c1'},
+                {label: 'Ideal Range', data: labels.map(k=>healthy[k]), backgroundColor: '#28a745'}
+              ]
+            },
+            options: {
+              plugins: { legend: {position:'top'} },
+              scales: { y: { beginAtZero:true } }
+            }
+          });
+        });
+        </script>
+
+        <!-- PDF Download Button -->
+        <div style="text-align: right; margin-top: 40px;">
+          <a href="/download_report" class="btn-primary large" style="text-decoration:none;">📄 Download Report (PDF)</a>
+        </div>
+    {% endif %}
+
+{% endblock %}

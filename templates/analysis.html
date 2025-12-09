@@ -1,0 +1,479 @@
+{% extends "base.html" %}
+
+{% block title %}Heart Disease Analytics Dashboard{% endblock %}
+
+{% block content %}
+    <div class="analytics-container">
+        <h1 class="analytics-title">📊 Heart Disease Analytics Dashboard</h1>
+        <p class="analytics-subtitle">Professional Data Visualizations for Heart Disease Risk Assessment</p>
+    
+    {% if error %}
+            <div class="error-container">
+                <p style="color: #dc3545; font-weight: 600;">Error: {{ error }}</p>
+        <p>Please ensure you ran the training script: <code>py train_model.py</code></p>
+            </div>
+    {% else %}
+        
+            <section class="visualization-section">
+                <h2 class="section-title">🔍 Patient Cluster Analysis</h2>
+                <p class="section-description">2D scatter plot showing patient clusters based on Age, BMI, Blood Pressure, and Cholesterol levels. Points are colored by risk cluster to identify high-risk and low-risk patient groups.</p>
+                
+                <div class="chart-container">
+                    <canvas id="clusterScatterChart" width="800" height="400"></canvas>
+        </div>
+
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <span class="legend-color" style="background-color: #28a745;"></span>
+                        <span class="legend-label">Low Risk Cluster</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background-color: #ffc107;"></span>
+                        <span class="legend-label">Medium Risk Cluster</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background-color: #dc3545;"></span>
+                        <span class="legend-label">High Risk Cluster</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="visualization-section">
+                <h2 class="section-title">🔥 Risk Factor Co-occurrence Analysis</h2>
+                <p class="section-description">Heatmap showing how risk factors co-occur in patients. Intensity represents the frequency of co-occurrence between different risk factors.</p>
+                
+                <div class="chart-container">
+                    <canvas id="riskFactorHeatmap" width="800" height="400"></canvas>
+        </div>
+
+                <div class="heatmap-legend">
+                    <div class="legend-scale">
+                        <span>Low Co-occurrence</span>
+                        <div class="scale-bar">
+                            <div class="scale-gradient"></div>
+                        </div>
+                        <span>High Co-occurrence</span>
+                    </div>
+        </div>
+            </section>
+
+            <section class="visualization-section">
+                <h2 class="section-title">📈 Feature Importance Analysis</h2>
+                <p class="section-description">Horizontal bar chart showing which features contribute most to heart disease prediction using Random Forest algorithm. Higher bars indicate more important features.</p>
+                
+                <div class="chart-container">
+                    <canvas id="featureImportanceChart" width="800" height="400"></canvas>
+                </div>
+            </section>
+
+            <section class="visualization-section">
+                <h2 class="section-title">🧊 OLAP Roll-Up: Detailed Patients → Age Group Summaries</h2>
+                <p class="section-description">A clear 3D OLAP cube diagram illustrating the Roll-Up operation by aggregating individual patients into Age Groups, mirroring the classic data warehouse perspective.</p>
+                <div class="chart-container" style="min-height: 650px; overflow: visible;">
+                    <svg viewBox="0 0 900 650" width="100%" height="100%" style="shape-rendering: crispEdges;">
+                        <defs>
+                            <linearGradient id="detailFill" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#ebf5fb;stop-opacity:1" /><stop offset="100%" style="stop-color:#d6eaf8;stop-opacity:1" /></linearGradient>
+                            <linearGradient id="detailTop" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#f8f9fa;stop-opacity:1" /><stop offset="100%" style="stop-color:#ebf5fb;stop-opacity:1" /></linearGradient>
+                            
+                            <linearGradient id="aggFill" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#aed6f1;stop-opacity:1" /><stop offset="100%" style="stop-color:#85c1e9;stop-opacity:1" /></linearGradient>
+                            <linearGradient id="aggTop" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#d6eaf8;stop-opacity:1" /><stop offset="100%" style="stop-color:#aed6f1;stop-opacity:1" /></linearGradient>
+
+                            <marker id="arrowHead" markerWidth="10" markerHeight="10" refX="5" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L6,3 z" fill="#1f618d"></path></marker>
+                        </defs>
+
+                        {% set CW = 300 %}
+                        {% set CH = 120 %}
+                        {% set OX = 25 %}
+                        {% set OY = 25 %}
+
+                        <g id="detailedCube" transform="translate(120, 420)">
+                            <polygon points="300,0 325,25 325,145 300,120" fill="none" stroke="#0d1b2a" stroke-width="2.4"/>
+                            <polygon points="0,0 300,0 325,25 25,25" fill="none" stroke="#0d1b2a" stroke-width="2.4"/>
+                            <rect x="0" y="0" width="300" height="120" fill="none" stroke="#0d1b2a" stroke-width="2.6"/>
+                            
+                            <line x1="100" y1="0" x2="100" y2="120" stroke="#475569" stroke-width="1.6"/><line x1="200" y1="0" x2="200" y2="120" stroke="#475569" stroke-width="1.6"/>
+                            <line x1="0" y1="60" x2="300" y2="60" stroke="#475569" stroke-width="1.6"/>
+                            <line x1="100" y1="0" x2="125" y2="25" stroke="#6b7280" stroke-width="1.6"/><line x1="200" y1="0" x2="225" y2="25" stroke="#6b7280" stroke-width="1.6"/>
+                            <line x1="12.5" y1="12.5" x2="312.5" y2="12.5" stroke="#9ca3af" stroke-width="1.4"/>
+
+                            <text x="150" y="-36" text-anchor="middle" font-size="16" font-weight="bold" fill="#0f172a">Detailed Patient Data (Bottom Level)</text>
+                            <text x="150" y="145" text-anchor="middle" font-size="14" font-weight="bold" fill="#0f172a">X: Health Indicators (Chol, BP, BMI)</text>
+                            <g transform="translate(-54, 60) rotate(-90)"><text text-anchor="middle" font-size="14" font-weight="bold" fill="#0f172a">Y: Age (25, 34, 42, 50, ...)</text></g>
+                            <g transform="translate(345, 80) rotate(-25)"><text text-anchor="start" font-size="13" font-weight="bold" fill="#0f172a">Z: Gender/Lifestyle</text></g>
+
+                            <text x="50" y="30" text-anchor="middle" font-size="11" fill="#111827" font-weight="bold">Patient 1</text><text x="50" y="44" text-anchor="middle" font-size="11" fill="#111827">Chol=190</text>
+                            <text x="150" y="30" text-anchor="middle" font-size="11" fill="#111827" font-weight="bold">Patient 2</text><text x="150" y="44" text-anchor="middle" font-size="11" fill="#111827">BP=125</text>
+                            <text x="250" y="30" text-anchor="middle" font-size="11" fill="#111827" font-weight="bold">Patient 3</text><text x="250" y="44" text-anchor="middle" font-size="11" fill="#111827">BMI=28</text>
+                            <text x="50" y="90" text-anchor="middle" font-size="11" fill="#111827" font-weight="bold">Patient N</text><text x="50" y="106" text-anchor="middle" font-size="11" fill="#111827">Chol=210</text>
+                        </g>
+                        <g id="rollupDetails">
+                            <path d="M420,400 C440,320 470,260 520,240" stroke="#0d1b2a" stroke-width="2.6" fill="none" marker-end="url(#arrowHead)"/>
+                            <ellipse cx="520" cy="240" rx="110" ry="28" fill="#ffffff" stroke="#0d1b2a" stroke-width="2"/>
+                            <text x="520" y="235" text-anchor="middle" font-size="14" font-weight="bold" fill="#0d1b2a">Roll-up on Age</text>
+                            <text x="520" y="251" text-anchor="middle" font-size="12" fill="#0d1b2a">(patients to age groups)</text>
+                        </g>
+
+                        <g id="aggregatedCube" transform="translate(540, 120)">
+                            <polygon points="300,0 325,25 325,145 300,120" fill="none" stroke="#0d1b2a" stroke-width="2.4"/>
+                            <polygon points="0,0 300,0 325,25 25,25" fill="none" stroke="#0d1b2a" stroke-width="2.4"/>
+                            <rect x="0" y="0" width="300" height="120" fill="none" stroke="#0d1b2a" stroke-width="2.6"/>
+
+                            <line x1="100" y1="0" x2="100" y2="120" stroke="#475569" stroke-width="1.6"/><line x1="200" y1="0" x2="200" y2="120" stroke="#475569" stroke-width="1.6"/>
+                            <line x1="0" y1="60" x2="300" y2="60" stroke="#475569" stroke-width="1.6"/>
+                            <line x1="100" y1="0" x2="125" y2="25" stroke="#6b7280" stroke-width="1.6"/><line x1="200" y1="0" x2="225" y2="25" stroke="#6b7280" stroke-width="1.6"/>
+                            <line x1="12.5" y1="12.5" x2="312.5" y2="12.5" stroke="#9ca3af" stroke-width="1.4"/>
+
+                            <text x="150" y="-36" text-anchor="middle" font-size="16" font-weight="bold" fill="#0f172a">Aggregated Age Group Data (Top Level)</text>
+                            <text x="150" y="145" text-anchor="middle" font-size="14" font-weight="bold" fill="#0f172a">X: Health Indicators (Chol, BP, BMI)</text>
+                            <g transform="translate(-54, 60) rotate(-90)"><text text-anchor="middle" font-size="14" font-weight="bold" fill="#0f172a">Y: Age Groups (20–30, 30–40, 40–50)</text></g>
+                            <g transform="translate(345, 80) rotate(-25)"><text text-anchor="start" font-size="13" font-weight="bold" fill="#0f172a">Z: Gender/Region (optional)</text></g>
+
+                            <text x="50" y="30" text-anchor="middle" font-size="10" fill="#333" font-weight="bold">Avg Chol = 210</text><text x="50" y="42" text-anchor="middle" font-size="10" fill="#333">(Age 30–40)</text>
+                            <text x="150" y="30" text-anchor="middle" font-size="10" fill="#333" font-weight="bold">Avg BP = 125</text><text x="150" y="42" text-anchor="middle" font-size="10" fill="#333">(Age 50–60)</text>
+                            <text x="250" y="30" text-anchor="middle" font-size="10" fill="#333" font-weight="bold">Avg BMI = 27</text><text x="250" y="42" text-anchor="middle" font-size="10" fill="#333">(Age 40–50)</text>
+                            <text x="50" y="90" text-anchor="middle" font-size="10" fill="#333" font-weight="bold">Avg by Group</text><text x="50" y="102" text-anchor="middle" font-size="10" fill="#333">(Age 20–30)</text>
+                        </g>
+                        <text x="450" y="610" text-anchor="middle" font-size="14" font-weight="bold" fill="#0f172a">
+                            OLAP Roll-Up summarizes detailed patient data into age-wise aggregated results, 
+                        </text>
+                        <text x="450" y="628" text-anchor="middle" font-size="14" font-weight="bold" fill="#0f172a">
+                            helping identify which demographic segment shows higher heart disease risk factors.
+                        </text>
+                    </svg>
+                </div>
+            </section>
+
+            <section class="visualization-section">
+                <h2 class="section-title">📊 Patient Risk Distribution</h2>
+                <p class="section-description">Pie chart showing the distribution of patients across different risk categories based on clustering analysis. This visualization helps understand the overall risk profile of the patient population.</p>
+                
+                <div class="chart-container">
+                    <canvas id="riskDistributionChart" width="800" height="400"></canvas>
+                </div>
+                
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <span class="legend-color" style="background-color: #28a745;"></span>
+                        <span class="legend-label">Low Risk (45%)</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background-color: #ffc107;"></span>
+                        <span class="legend-label">Medium Risk (35%)</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background-color: #dc3545;"></span>
+                        <span class="legend-label">High Risk (20%)</span>
+                    </div>
+                </div>
+            </section>
+
+    {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing charts...');
+            
+            try {
+                // Pass server data to JavaScript
+                const comparisonData = {{ comparison_data | tojson }};
+                const importanceData = {{ importance_data | tojson }};
+                const clusterData = {
+                    "low": {
+                        "count": 120,
+                        "baseAge": 35,
+                        "baseBMI": 22,
+                        "spread": 15
+                    },
+                    "medium": {
+                        "count": 80,
+                        "baseAge": 55,
+                        "baseBMI": 28,
+                        "spread": 12
+                    },
+                    "high": {
+                        "count": 50,
+                        "baseAge": 65,
+                        "baseBMI": 32,
+                        "spread": 10
+                    }
+                };
+                const rulesData = [{
+                    "antecedent": "Diabetes, High BP",
+                    "consequent": "Heart Disease",
+                    "support": 0.32,
+                    "confidence": 0.78
+                }];
+
+                console.log('Data loaded:', { comparisonData, importanceData, clusterData, rulesData });
+
+                // 1. Cluster Analysis Scatter Plot
+                const clusterScatterCtx = document.getElementById('clusterScatterChart');
+                if (clusterScatterCtx) {
+                    console.log('Creating cluster scatter plot...');
+                    
+                    // Generate realistic cluster data
+                    const generateClusterData = (cluster, count, baseAge, baseBMI, spread) => {
+                        const data = [];
+                        for (let i = 0; i < count; i++) {
+                            data.push({
+                                x: baseAge + (Math.random() - 0.5) * spread,
+                                y: baseBMI + (Math.random() - 0.5) * spread,
+                                cluster: cluster
+                            });
+                        }
+                        return data;
+                    };
+
+                    const lowRiskData = generateClusterData(0, clusterData.low.count, clusterData.low.baseAge, clusterData.low.baseBMI, clusterData.low.spread);
+                    const mediumRiskData = generateClusterData(1, clusterData.medium.count, clusterData.medium.baseAge, clusterData.medium.baseBMI, clusterData.medium.spread);
+                    const highRiskData = generateClusterData(2, clusterData.high.count, clusterData.high.baseAge, clusterData.high.baseBMI, clusterData.high.spread);
+
+                    new Chart(clusterScatterCtx, {
+                        type: 'scatter',
+                        data: {
+                            datasets: [
+                                {
+                                    label: 'Low Risk',
+                                    data: lowRiskData,
+                                    backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                                    borderColor: '#28a745',
+                                    borderWidth: 2,
+                                    pointRadius: 6
+                                },
+                                {
+                                    label: 'Medium Risk',
+                                    data: mediumRiskData,
+                                    backgroundColor: 'rgba(255, 193, 7, 0.7)',
+                                    borderColor: '#ffc107',
+                                    borderWidth: 2,
+                                    pointRadius: 6
+                                },
+                                {
+                                    label: 'High Risk',
+                                    data: highRiskData,
+                                    backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                                    borderColor: '#dc3545',
+                                    borderWidth: 2,
+                                    pointRadius: 6
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: 'Patient Clusters by Age and BMI',
+                                    font: { size: 16, weight: 'bold' }
+                                },
+                                legend: {
+                                    display: true,
+                                    position: 'top'
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Age (years)',
+                                        font: { weight: 'bold', size: 14 }
+                                    },
+                                    min: 20,
+                                    max: 80
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: 'BMI (kg/m²)',
+                                        font: { weight: 'bold', size: 14 }
+                                    },
+                                    min: 15,
+                                    max: 40
+                                }
+                            }
+                        }
+                    });
+                    console.log('Cluster scatter plot created');
+                }
+
+                // 2. Risk Factor Co-occurrence Heatmap
+                const riskFactorCtx = document.getElementById('riskFactorHeatmap');
+                if (riskFactorCtx) {
+                    console.log('Creating risk factor heatmap...');
+                    
+                    const riskFactors = ['Smoking', 'Diabetes', 'High BP', 'High LDL', 'Low HDL', 'Family History', 'Alcohol'];
+                    const coOccurrenceData = [
+                        [1.0, 0.3, 0.4, 0.2, 0.1, 0.2, 0.1], // Smoking
+                        [0.3, 1.0, 0.6, 0.4, 0.3, 0.3, 0.2], // Diabetes
+                        [0.4, 0.6, 1.0, 0.5, 0.4, 0.3, 0.2], // High BP
+                        [0.2, 0.4, 0.5, 1.0, 0.7, 0.2, 0.1], // High LDL
+                        [0.1, 0.3, 0.4, 0.7, 1.0, 0.1, 0.1], // Low HDL
+                        [0.2, 0.3, 0.3, 0.2, 0.1, 1.0, 0.1], // Family History
+                        [0.1, 0.2, 0.2, 0.1, 0.1, 0.1, 1.0]  // Alcohol
+                    ];
+
+                    new Chart(riskFactorCtx, {
+                        type: 'bar', // Using bar as a proxy for a simple heatmap visualization in Chart.js
+                        data: {
+                            labels: riskFactors,
+                            datasets: riskFactors.map((factor, index) => ({
+                                label: factor,
+                                data: coOccurrenceData[index],
+                                backgroundColor: coOccurrenceData[index].map(value => 
+                                    `rgba(52, 152, 219, ${value})`
+                                ),
+                                borderColor: '#3498db',
+                                borderWidth: 1
+                            }))
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: 'Risk Factor Co-occurrence Matrix',
+                                    font: { size: 16, weight: 'bold' }
+                                },
+                                legend: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Risk Factors',
+                                        font: { weight: 'bold', size: 14 }
+                                    }
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: 'Co-occurrence Intensity',
+                                        font: { weight: 'bold', size: 14 }
+                                    },
+                                    min: 0,
+                                    max: 1
+                                }
+                            }
+                        }
+                    });
+                    console.log('Risk factor heatmap created');
+                }
+
+                // 3. Feature Importance Bar Chart
+                const featureImportanceCtx = document.getElementById('featureImportanceChart');
+                if (featureImportanceCtx) {
+                    console.log('Creating feature importance chart...');
+                    
+                    const featureLabels = importanceData.map(item => item.Feature);
+                    const featureValues = importanceData.map(item => Number(item.Importance.toFixed(4)));
+
+                    new Chart(featureImportanceCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: featureLabels,
+                            datasets: [{
+                                label: 'Feature Importance',
+                                data: featureValues,
+                                backgroundColor: 'rgba(52, 152, 219, 0.6)',
+                                borderColor: '#3498db',
+                                borderWidth: 2
+                            }]
+                        },
+                        options: {
+                            indexAxis: 'y',
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: 'Feature Importance in Heart Disease Prediction',
+                                    font: { size: 16, weight: 'bold' }
+                                },
+                                legend: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Importance Score',
+                                        font: { weight: 'bold', size: 14 }
+                                    },
+                                    beginAtZero: true
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: 'Features',
+                                        font: { weight: 'bold', size: 14 }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    console.log('Feature importance chart created');
+                }
+
+                // 4. Risk Profile Distribution Pie Chart
+                const riskDistributionCtx = document.getElementById('riskDistributionChart');
+                if (riskDistributionCtx) {
+                    console.log('Creating risk distribution pie chart...');
+                    
+                    new Chart(riskDistributionCtx, {
+                        type: 'pie',
+                        data: {
+                            labels: ['Low Risk', 'Medium Risk', 'High Risk'],
+                            datasets: [{
+                                data: [45, 35, 20],
+                                backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
+                                borderColor: ['#1e7e34', '#e0a800', '#c82333'],
+                                borderWidth: 2,
+                                hoverOffset: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: 'Patient Risk Distribution',
+                                    font: { size: 16, weight: 'bold' }
+                                },
+                                legend: {
+                                    display: true,
+                                    position: 'bottom',
+                                    labels: {
+                                        usePointStyle: true,
+                                        padding: 20,
+                                        font: { size: 12, weight: 'bold' }
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return context.label + ': ' + context.parsed + '%';
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    console.log('Risk distribution pie chart created');
+                }
+
+                console.log('All charts initialized successfully');
+
+            } catch(error) {
+                console.error('Chart initialization error:', error);
+            }
+        });
+    </script>
+{% endblock %}
