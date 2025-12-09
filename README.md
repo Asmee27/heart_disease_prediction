@@ -77,8 +77,6 @@ Model performance is evaluated using:
 
 ---
 
-## 📈 Project Outputs
-All result images are stored in the `outputs/` directory.
 
 
 
